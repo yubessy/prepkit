@@ -1,4 +1,13 @@
 class BaseProcessor:
+    @classmethod
+    def build(cls, param):
+        if isinstance(param, dict):
+            return cls(**param)
+        elif isinstance(param, list) or isinstance(param, tuple):
+            return cls(*param)
+        else:
+            return cls(param)
+
     @property
     def source_type(self):
         raise NotImplementedError

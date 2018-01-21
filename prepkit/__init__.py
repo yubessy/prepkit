@@ -19,3 +19,39 @@ __all__ = [
     'Select',
     'ToFrame',
 ]
+
+PROCESSORS = {
+    'parallel': Parallel,
+    'serial': Serial,
+    'binary': Binary,
+    'categorical': Categorical,
+    'get': Get,
+    'nullable': Nullable,
+    'numerical': Numerical,
+    'select': Select,
+    'to_frame': ToFrame,
+}
+
+
+def build(obj):
+    if isinstance(obj, dict):
+        if not len(obj) == 1:
+            raise ValueError("obj must have only one key")
+
+        name = list(obj.keys())[0]
+        if name not in PROCESSORS:
+            raise ValueError("{} is not registered".format(name))
+
+        param = obj[name]
+        if name == 'parallel':
+            if not isinstance(param, dict):
+                raise ValueError("parallel param must be dict")
+            return Parallel.build({k: build(v) for k, v in param.items()})
+        else:
+            return PROCESSORS[name].build(param)
+
+    elif isinstance(obj, tuple) or isinstance(obj, list):
+        return Serial.build([build(v) for v in obj])
+
+    else:
+        raise ValueError("illegal obj type: {}".format(type(obj)))
