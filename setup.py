@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 NAME = 'prepkit'
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 LICENSE = 'LICENSE'
 DESCRIPTION = 'Preprocess pandas objects for machine learning'
 with open('README.rst') as f:
