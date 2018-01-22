@@ -60,6 +60,15 @@ target/
 # pyenv
 .python-version
 
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
 # mkdocs documentation
 /site
 

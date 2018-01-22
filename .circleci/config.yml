@@ -3,20 +3,34 @@ workflows:
   version: 2
   main:
     jobs:
-      - test
-      - hold:
-          type: approval
+      - test:
+          filters:
+            tags:
+              only: /.*/
+
+      - dist:
           requires:
             - test
           filters:
             tags:
-              only: /^v\d+\.\d+\.\d+/
+              only: /^v\d+\.\d+\.\d+(\.\w+)?$/
             branches:
               ignore: /.*/
+
+      - hold:
+          type: approval
+          requires:
+            - dist
+          filters:
+            tags:
+              only: /.*/
 
       - release:
           requires:
             - hold
+          filters:
+            tags:
+              only: /.*/
 
 jobs:
   test:
@@ -53,13 +67,37 @@ jobs:
             source .venv/bin/activate
             pytest tests
 
-  release:
+  dist:
     docker:
       - image: circleci/python:3.6.2
 
     steps:
       - checkout
 
-      - deploy:
+      - run:
+          name: overwrite version
+          command: echo $CIRCLE_TAG | sed 's/^v//' > VERSION
+
+      - run:
           name: sdist
           command: python setup.py sdist
+
+      - persist_to_workspace:
+          root: dist
+          paths: '*.tar.gz'
+
+  release:
+    docker:
+      - image: circleci/python:3.6.2
+
+    steps:
+      - attach_workspace:
+          at: dist
+
+      - run:
+          name: pip install
+          command: sudo pip install twine
+
+      - run:
+          name: upload to PyPI
+          command: twine upload dist/*
