@@ -15,10 +15,8 @@ PACKAGES = [
     'prepkit.processor.composite',
     'prepkit.processor.unit',
 ]
-INSTALL_REQUIRES = [
-    'attrs >= 17.1.0',
-    'pandas >= 0.18.1',
-]
+with open('requirements.txt') as f:
+    INSTALL_REQUIRES = [line.strip() for line in f if line.strip()]
 
 setup(
     name=NAME,

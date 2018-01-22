@@ -1,0 +1,65 @@
+version: 2
+workflows:
+  version: 2
+  main:
+    jobs:
+      - test
+      - hold:
+          type: approval
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+/
+            branches:
+              ignore: /.*/
+
+      - release:
+          requires:
+            - hold
+
+jobs:
+  test:
+    docker:
+      - image: circleci/python:3.6.2
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: requirements-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements/test.txt" }}
+
+      - run:
+          name: setup venv and pip install
+          command: |
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r requirements.txt -r requirements/test.txt
+
+      - save_cache:
+          key: requirements-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements/test.txt" }}
+          paths:
+            - .venv
+
+      - run:
+          name: lint
+          command: |
+            source .venv/bin/activate
+            python -m flake8 prepkit tests
+
+      - run:
+          name: test
+          command: |
+            source .venv/bin/activate
+            pytest tests
+
+  release:
+    docker:
+      - image: circleci/python:3.6.2
+
+    steps:
+      - checkout
+
+      - deploy:
+          name: sdist
+          command: python setup.py sdist
