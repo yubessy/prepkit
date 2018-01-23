@@ -3,25 +3,25 @@ workflows:
   version: 2
   main:
     jobs:
+      - build:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(\.\w+)?$/
+
       - test:
+          requires:
+            - build
           filters:
             tags:
               only: /.*/
 
-      - dist:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(\.\w+)?$/
-            branches:
-              ignore: /.*/
-
       - hold:
           type: approval
           requires:
-            - dist
+            - test
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /.*/
 
@@ -33,71 +33,70 @@ workflows:
               only: /.*/
 
 jobs:
-  test:
+  build:
     docker:
-      - image: circleci/python:3.6.2
+      - image: circleci/python:3
 
     steps:
       - checkout
-
-      - restore_cache:
-          key: requirements-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements/test.txt" }}
-
-      - run:
-          name: setup venv and pip install
-          command: |
-            python -m venv .venv
-            source .venv/bin/activate
-            pip install -r requirements.txt -r requirements/test.txt
-
-      - save_cache:
-          key: requirements-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements/test.txt" }}
-          paths:
-            - .venv
 
       - run:
           name: lint
           command: |
-            source .venv/bin/activate
-            python -m flake8 prepkit tests
+            sudo pip install flake8
+            flake8 prepkit tests
 
       - run:
-          name: test
+          name: build
           command: |
-            source .venv/bin/activate
-            pytest tests
-
-  dist:
-    docker:
-      - image: circleci/python:3.6.2
-
-    steps:
-      - checkout
-
-      - run:
-          name: overwrite version
-          command: echo $CIRCLE_TAG | sed 's/^v//' > VERSION
-
-      - run:
-          name: sdist
-          command: python setup.py sdist
+            if [[ $CIRCLE_TAG =~ ^v[0-9]+\..+$ ]]; then
+              echo $CIRCLE_TAG | sed 's/^v//' > VERSION
+            fi
+            python setup.py sdist
 
       - persist_to_workspace:
           root: dist
           paths: '*.tar.gz'
 
-  release:
+      - persist_to_workspace:
+          root: tests
+          paths: '*'
+
+  test:
     docker:
-      - image: circleci/python:3.6.2
+      - image: circleci/python:3
 
     steps:
       - attach_workspace:
           at: dist
 
       - run:
-          name: pip install
-          command: sudo pip install twine
+          name: install
+          command: |
+            python -m venv venv
+            source venv/bin/activate
+            pip install pytest
+            pip install dist/*.tar.gz
+
+      - attach_workspace:
+          at: tests
 
       - run:
-          name: upload to PyPI
-          command: twine upload dist/*
+          name: test
+          command: |
+            source venv/bin/activate
+            pytest tests
+
+  release:
+    docker:
+      - image: circleci/python:3
+
+    steps:
+      - attach_workspace:
+          at: dist
+
+      - deploy:
+          name: release
+          command: |
+            sudo pip install twine
+            twine upload dist/*
