@@ -99,4 +99,4 @@ jobs:
           name: release
           command: |
             sudo pip install twine
-            twine upload dist/*
+            twine upload dist/*.tar.gz
