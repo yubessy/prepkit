@@ -75,8 +75,10 @@ jobs:
           command: |
             python -m venv venv
             source venv/bin/activate
+            mkdir tmp
+            cp dist/*.tar.gz tmp/
+            pip install tmp/*.tar.gz
             pip install pytest
-            pip install dist/*.tar.gz
 
       - attach_workspace:
           at: tests
