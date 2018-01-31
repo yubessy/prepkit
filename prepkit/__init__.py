@@ -27,8 +27,8 @@ __all__ = [
     'Isnull',
     'Nullable',
     'Numerical',
-    'Regex'
-    'Scale'
+    'Regex',
+    'Scale',
     'Select',
     'Steps',
     'ToFrame',
