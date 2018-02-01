@@ -1,4 +1,4 @@
-from prepkit import build, Get, Parallel, Serial, Numerical
+from prepkit import build, Get, Parallel, Serial, GetDummies
 
 
 def test_build():
@@ -21,8 +21,8 @@ def test_build_parallel():
 def test_build_serial():
     p = build([
         {'get': 'a'},
-        {'numerical': {}},
+        {'get_dummies': {}},
     ])
     assert isinstance(p, Serial)
     assert isinstance(p._processors[0], Get)
-    assert isinstance(p._processors[1], Numerical)
+    assert isinstance(p._processors[1], GetDummies)
