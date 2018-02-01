@@ -14,8 +14,8 @@ class Scale(BaseProcessor):
 
     minlim = attrib(default=None, validator=optional(instance_of(Number)))
     maxlim = attrib(default=None, validator=optional(instance_of(Number)))
-    normalize = attrib(default=False, validator=instance_of(bool))
-    standardize = attrib(default=False, validator=instance_of(bool))
+    normalize = attrib(default=False, type=bool)
+    standardize = attrib(default=False, type=bool)
 
     @maxlim.validator
     def validate_minmax(self, attribute, value):
