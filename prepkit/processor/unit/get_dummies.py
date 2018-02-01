@@ -17,7 +17,7 @@ class GetDummies(BaseProcessor):
         if not is_nan(self.drop):
             series = series.map(self._swap_drop_nan)
 
-        return get_dummies(series).astype(numpy.uint8)
+        return get_dummies(series).astype(numpy.uint8).rename(str, axis=1)
 
     def _swap_drop_nan(self, value):
         drop = self.drop
